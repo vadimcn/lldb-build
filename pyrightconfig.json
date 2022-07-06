@@ -1,0 +1,6 @@
+{
+    "strict": ["lldb_build.py", "lldb_build"],
+    "reportUnusedVariable": "none",
+    "reportUnusedImport": "warning",
+    "strictParameterNoneValue": false
+}
