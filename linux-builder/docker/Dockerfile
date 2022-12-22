@@ -40,6 +40,8 @@ RUN cd /usr/local/bin &&\
     strip -s * || true
 RUN cd /usr/local/lib && rm *.a *.bc
 RUN ln -s /usr/local/bin/clang /usr/bin/cc && ln -s /usr/local/bin/clang++ /usr/bin/c++
+RUN echo "/usr/local/lib/x86_64-unknown-linux-gnu" > /etc/ld.so.conf.d/clang_libs.conf
+RUN ldconfig
 
 # Install cmake
 COPY cmake.sh /tmp/cmake.sh

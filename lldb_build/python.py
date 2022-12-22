@@ -96,6 +96,7 @@ def build_lldb_python(python_dist: Path, output: Path, cfg: TargetConfig):
             libs += ['-lpthread', '-lm', '-lutil']
             python_dylib = output / 'lib' / f'libpython{major}{minor}.so'
             cmd = c_compiler + ['-shared',
+                                '-fuse-ld=lld',
                                 '-Wl,--no-undefined',
                                 '-Wl,--version-script,python.exports',
                                 '-o', str(python_dylib)] + objects + ['-Wl,-('] + libs + ['-Wl,-)']

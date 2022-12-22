@@ -15,3 +15,7 @@ tar -xvf clang+llvm-15.0.6-armv7a-linux-gnueabihf.tar.xz --strip-components=1 -C
     clang+llvm-15.0.6-armv7a-linux-gnueabihf/include/armv7l-unknown-linux-gnueabihf/c++ \
     clang+llvm-15.0.6-armv7a-linux-gnueabihf/lib/armv7l-unknown-linux-gnueabihf \
     clang+llvm-15.0.6-armv7a-linux-gnueabihf/lib/clang
+# Rename armv7l to armv7
+mv docker/crosslib/lib/armv7l-unknown-linux-gnueabihf docker/crosslib/lib/armv7-unknown-linux-gnueabihf
+mv docker/crosslib/lib/clang/15.0.6/lib/armv7l-unknown-linux-gnueabihf docker/crosslib/lib/clang/15.0.6/lib/armv7-unknown-linux-gnueabihf
+mv docker/crosslib/include/armv7l-unknown-linux-gnueabihf docker/crosslib/include/armv7-unknown-linux-gnueabihf
