@@ -63,7 +63,6 @@ RUN apt-get install \
     automake \
     binutils \
     bison \
-    debootstrap \
     file \
     git \
     libc6-dev \
@@ -81,18 +80,8 @@ RUN apt-get install \
     zip \
     zstd
 
-# Create sysroot with legacy libs
-RUN debootstrap --variant=minbase stretch /tmp/stretch
-COPY configure-sysroot.sh /tmp/stretch/configure-sysroot.sh
-RUN chroot /tmp/stretch /configure-sysroot.sh
-RUN mkdir /stretch && \
-    mv /tmp/stretch/lib /stretch/lib && \
-    mv /tmp/stretch/usr /stretch/usr
-
-# Update headers which LLDB needs in order to compile for arm64
-COPY ptrace.h      /stretch/usr/include/aarch64-linux-gnu/asm/ptrace.h
-COPY sigcontext.h  /stretch/usr/include/aarch64-linux-gnu/asm/sigcontext.h
-COPY sve_context.h /stretch/usr/include/aarch64-linux-gnu/asm/sve_context.h
+# Sysroot with legacy libs
+COPY stretch /stretch
 
 # Defult to ld.gold
 RUN update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.gold" 20 && \
@@ -107,8 +96,7 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang \
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-Clink-arg=--sysroot=/stretch -Clink-arg=-fuse-ld=lld -Clink-arg=--target=aarch64-unknown-linux-gnu"
 
 # Cleanup
-RUN apt-get remove debootstrap && \
-    apt-get autoremove && \
+RUN apt-get autoremove && \
     apt-get clean
 
 RUN rm -rf /var/lib/apt/lists/* && \
