@@ -97,7 +97,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
     return llvm_build
 
 
-def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
+def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: TargetConfig,
                  output_zip: Path, debug_output_zip: Path, release_package: bool = False):
 
     compression = zipfile.ZIP_DEFLATED if release_package else zipfile.ZIP_STORED
@@ -126,6 +126,13 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                     yield abspath, relpath
 
         # lldb
+        lldb_includes = [
+            'include/lldb/lldb-*.h',
+            'include/lldb/API/*.h',
+        ]
+        files = rel_glob(llvm_src / 'lldb', lldb_includes)
+        add_to_zip(files, zip)
+
         target_os = cfg['CMAKE_SYSTEM_NAME']
         if target_os == 'Linux':
 
@@ -135,7 +142,7 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                 'bin/lldb-server',
                 'lib/liblldb.*'
             ]
-            files = rel_glob(lldb_root, lldb_files)
+            files = rel_glob(llvm_build, lldb_files)
             add_to_zip(strip_binaries(files), zip)
 
             lldb_debug_files = [
@@ -147,16 +154,16 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                 'bin/llvm-readobj',
                 'lib/liblldb.*'
             ]
-            files = rel_glob(lldb_root, lldb_files)
+            files = rel_glob(llvm_build, lldb_files)
             add_to_zip(files, debug_zip)
 
-            python_files = rel_glob(lldb_root, 'lib/lldb-python/**/*')
+            python_files = rel_glob(llvm_build, 'lib/lldb-python/**/*')
             compose(python_files, exclude_lldb, (add_to_zip, zip))
 
         elif target_os == 'Darwin':
 
             # Fix install_name of Python in liblldb.dylib
-            shutil.copy(join(lldb_root, 'lib/liblldb.dylib'), tempbin)
+            shutil.copy(join(llvm_build, 'lib/liblldb.dylib'), tempbin)
             output = check_output(['otool', '-L', str(tempbin)], encoding='utf8')
             regex = re.compile(r'^\s*(.*(libpython3.*))\s\(', re.MULTILINE)
             match = regex.search(output)
@@ -171,7 +178,7 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                 'bin/lldb-argdumper',
                 'bin/debugserver',
             ]
-            files = rel_glob(lldb_root, lldb_files)
+            files = rel_glob(llvm_build, lldb_files)
             add_to_zip(files, zip)
             for abspath, _ in files:
                 dsymname = os.path.splitext(abspath)[0] + '.dSYM'
@@ -188,9 +195,9 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                 'bin/llvm-readobj.dSYM/**/*',
                 'lib/liblldb*.dSYM/**/*',
             ]
-            add_to_zip(rel_glob(lldb_root, lldb_debug_files), debug_zip)
+            add_to_zip(rel_glob(llvm_build, lldb_debug_files), debug_zip)
 
-            python_files = rel_glob(lldb_root, 'lib/lldb-python/**/*')
+            python_files = rel_glob(llvm_build, 'lib/lldb-python/**/*')
             compose(python_files, exclude_lldb, (add_to_zip, zip))
 
         elif target_os == 'Windows':
@@ -202,7 +209,7 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                 'bin/vcruntime*.dll',
                 'lib/liblldb.lib',
             ]
-            add_to_zip(rel_glob(lldb_root, lldb_files), zip)
+            add_to_zip(rel_glob(llvm_build, lldb_files), zip)
 
             lldb_debug_files = [
                 'bin/lldb.pdb',
@@ -215,9 +222,9 @@ def package_lldb(lldb_root: Path, python_dist: Path, cfg: TargetConfig,
                 'bin/llvm-readobj.pdb',
                 'bin/liblldb.pdb',
             ]
-            add_to_zip(rel_glob(lldb_root, lldb_debug_files), debug_zip)
+            add_to_zip(rel_glob(llvm_build, lldb_debug_files), debug_zip)
 
-            python_files = rel_glob(lldb_root, 'lib/lldb-python/**/*')
+            python_files = rel_glob(llvm_build, 'lib/lldb-python/**/*')
             compose(python_files, exclude_lldb, (add_to_zip, zip))
 
         else:

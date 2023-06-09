@@ -36,15 +36,17 @@ def main(args: Any):
 
     libxml_inc, libxml_lib = build_libxml2(work_dir, cfg, args.build_type)
 
-    lldb_root = build_lldb(work_dir, cfg, args.build_type,
-                           ccache=args.ccache,
-                           libxml_inc=libxml_inc, libxml_lib=libxml_lib,
-                           python_exe=python_exe, python_inc=python_inc, python_lib=python_lib)
+    llvm_build = build_lldb(work_dir, cfg, args.build_type,
+                            ccache=args.ccache,
+                            libxml_inc=libxml_inc, libxml_lib=libxml_lib,
+                            python_exe=python_exe, python_inc=python_inc, python_lib=python_lib)
 
     lldb_archive = work_dir / f'lldb--{args.target}.zip'
     lldb_debug_archive = work_dir / f'lldb-debug--{args.target}.zip'
 
-    package_lldb(lldb_root, python_lldb, cfg, lldb_archive, lldb_debug_archive, release_package=args.release_package)
+    llvm_src = Path(__file__).resolve().parent.parent / 'llvm-project'
+    package_lldb(llvm_src, llvm_build, python_lldb, cfg, lldb_archive, lldb_debug_archive,
+                 release_package=args.release_package)
 
 
 if __name__ == '__main__':
