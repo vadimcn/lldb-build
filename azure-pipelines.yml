@@ -15,6 +15,7 @@ resources:
   - repository: libxml2
     type: github
     name: GNOME/libxml2
+    ref:  refs/tags/v2.10.4
     endpoint: github.com_vadimcn
 
 jobs:
