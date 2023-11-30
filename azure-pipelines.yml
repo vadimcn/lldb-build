@@ -159,15 +159,8 @@ jobs:
 
   - script: |
       mkdir -p $(Agent.BuildDirectory)/llvm/bin
-      cp $(Build.SourcesDirectory)/arch/darwin/bin/debugserver $(Agent.BuildDirectory)/llvm/bin/debugserver
-    displayName: PreBuild
-    condition: eq(variables['Triple'], 'x86_64-apple-darwin')
-
-  - script: |
-      mkdir -p $(Agent.BuildDirectory)/llvm/bin
       cp /Library/Developer/CommandLineTools/Library/PrivateFrameworks/LLDB.framework/Versions/A/Resources/debugserver $(Agent.BuildDirectory)/llvm/bin/debugserver
     displayName: 'PreBuild'
-    condition: eq(variables['Triple'], 'aarch64-apple-darwin')
 
   - script: |
       git -C $(Build.SourcesDirectory)/llvm-project remote set-url origin local
