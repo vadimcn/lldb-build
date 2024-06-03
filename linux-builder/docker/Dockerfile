@@ -1,4 +1,25 @@
-FROM debian:buster-slim
+FROM debian:bookworm-slim AS build
+
+RUN apt-get update
+RUN apt-get install \
+    xz-utils
+
+# Install clang
+COPY clang.tar.xz /tmp/clang.tar.xz
+RUN tar -xvf /tmp/clang.tar.xz --strip-components=1 -C /usr/local
+
+# Remove unneeded files
+RUN cd /usr/local/bin &&\
+    rm bugpoint clang-[a-z]* mlir* clangd opt llc lli find-all-symbols modularize llvm-lto llvm-lto2 dsymutil llvm-c-test c-index-test &&\
+    strip -s * || true
+RUN cd /usr/local/lib && rm *.a *.bc
+
+# Install cmake
+COPY cmake.sh /tmp/cmake.sh
+RUN bash /tmp/cmake.sh --skip-license --prefix=/usr/local
+
+# --------------------------------------------------
+FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -23,32 +44,21 @@ RUN apt-get install \
     apt-transport-https \
     sudo \
     binutils \
-    xz-utils \
     wget \
     curl
-
 RUN apt-get update
 
-# Install clang
-COPY clang.tar.xz /tmp/clang.tar.xz
-RUN tar -xvf /tmp/clang.tar.xz --strip-components=1 -C /usr/local
+# Copy stuff from the build image
+COPY --from=build /usr/local /usr/local
 # libc++ cross-libs
 COPY crosslib /usr/local
-# Remove unneeded files
-RUN cd /usr/local/bin &&\
-    rm bugpoint clang-[a-z]* mlir* clangd opt llc lli find-all-symbols modularize llvm-lto llvm-lto2 dsymutil llvm-c-test c-index-test &&\
-    strip -s * || true
-RUN cd /usr/local/lib && rm *.a *.bc
+
 RUN ln -s /usr/local/bin/clang /usr/bin/cc && ln -s /usr/local/bin/clang++ /usr/bin/c++
 RUN echo "/usr/local/lib/x86_64-unknown-linux-gnu" > /etc/ld.so.conf.d/clang_libs.conf
 RUN ldconfig
 
-# Install cmake
-COPY cmake.sh /tmp/cmake.sh
-RUN bash /tmp/cmake.sh --skip-license --prefix=/usr/local
-
 # Install node
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install nodejs
 
 # Install rustup
@@ -67,7 +77,7 @@ RUN apt-get install \
     git \
     libc6-dev \
     libpcre3-dev \
-    libstdc++-8-dev \
+    libstdc++-11-dev \
     libtinfo5 \
     libz-dev \
     make \

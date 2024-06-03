@@ -1,1 +1,1 @@
-docker build --tag vadimcn/linux-builder:latest --squash docker
+docker build ./docker --tag vadimcn/linux-builder:latest 
