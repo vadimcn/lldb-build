@@ -134,6 +134,9 @@ def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: Target
         files = rel_glob(llvm_src / 'lldb', lldb_includes)
         add_to_zip(files, zip)
 
+        files = rel_glob(llvm_build / 'tools/lldb', 'include/lldb/API/*.h')
+        add_to_zip(files, zip)
+
         target_os = cfg['CMAKE_SYSTEM_NAME']
         if target_os == 'Linux':
 

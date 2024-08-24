@@ -10,7 +10,7 @@ resources:
   - repository: llvm-project
     type: git
     name: llvm/llvm-project
-    ref: codelldb/18.x
+    ref: codelldb/19.x
 
   - repository: libxml2
     type: github
@@ -114,7 +114,7 @@ jobs:
   timeoutInMinutes: 360
 
   pool:
-    vmImage: 'macOS-11'
+    vmImage: 'macOS-latest'
 
   steps:
   - checkout: self
