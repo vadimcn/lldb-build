@@ -27,7 +27,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
         'LLVM_TARGETS_TO_BUILD': 'AArch64;ARM;AVR;MSP430;RISCV;X86;WebAssembly',
         'LLVM_EXPERIMENTAL_TARGETS_TO_BUILD': 'Xtensa',
         'LLVM_PARALLEL_LINK_JOBS': '1',
-        'LLVM_VERSION_SUFFIX': '-custom',
+        'LLVM_VERSION_SUFFIX': '-codelldb',
         'LLVM_APPEND_VC_REV': 'FALSE',
         'LLVM_ENABLE_TERMINFO': 'FALSE',
         'LLVM_ENABLE_ZSTD': 'FALSE',
@@ -67,19 +67,20 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
         cmake_args.update({
             'CMAKE_EXE_LINKER_FLAGS': cmake_args.get('CMAKE_EXE_LINKER_FLAGS', '') + ' -L' + str(python_lib.parent),
             'CMAKE_SHARED_LINKER_FLAGS': cmake_args.get('CMAKE_SHARED_LINKER_FLAGS', '') + ' -L' + str(python_lib.parent),
-            'LLVM_ENABLE_ZLIB': 'FORCE_ON'
+            'LLVM_ENABLE_ZLIB': 'FORCE_ON',
+            'LLVM_ENABLE_ZSTD': 'FORCE_ON',
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Darwin':
         cmake_args.update({
             'LLDB_USE_SYSTEM_DEBUGSERVER': 'ON',
-            'LLVM_ENABLE_ZLIB': 'FORCE_ON'
+            'LLVM_ENABLE_ZLIB': 'FORCE_ON',
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Windows':
         cmake_args.update({
             'CMAKE_C_FLAGS': '-DLIBXML_STATIC=1',
-            'CMAKE_CXX_FLAGS': '-DLIBXML_STATIC=1'
+            'CMAKE_CXX_FLAGS': '-DLIBXML_STATIC=1',
         })
 
     cmake_args = dict_to_cmake(cmake_args)
