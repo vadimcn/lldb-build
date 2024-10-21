@@ -144,7 +144,7 @@ jobs:
       architecture: 'x64'
 
   - script: |
-      brew install pcre automake ninja pkg-config
+      brew install pcre automake ninja pkg-config swig
     displayName: 'Install tools'
 
   - task: Cache@2
