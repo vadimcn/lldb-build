@@ -15,17 +15,25 @@ def build_lldb_python(python_dist: Path, output: Path, cfg: TargetConfig):
 
     extensions = manifest['build_info']['extensions']
 
-    def should_include(name: str, ext: Dict[str, Any]):
-        if ext['required']:
-            return True
-        if name in ['_ctypes', '_socket', '_ssl', '_scproxy', 'select', 'zlib', # Needed for codelldb or pip.
-                    '_bz2', '_lzma', # For pandas.
-                    '_json']:
-            return True
-        allowed_libs = ['intl', 'iconv']  # For some reason these are linked to most extensions on Mac.
-        extra_libs = [lib for lib in ext.get('links', []) if lib['name'] not in allowed_libs]
-        return len(extra_libs) == 0  # Don't want any other external lib dependencies.
+    extensions['_sha2'][0]['links'] = []  # https://github.com/indygreg/python-build-standalone/pull/312
 
+    # Filter built-in binary modules:
+    # The goal is to slim down the Python library, keeping modules that are needed or likely to be needed
+    # in the debugger environment (ctypes, json, pip), while excluding bloated ones that are unlikely
+    # to be needed (sqlite, curses, tkinter).
+    required_mods = ['_ctypes', '_json',  # codelldb
+                     '_socket', '_ssl', '_scproxy', '_overlapped', 'select', 'zlib', '_sha1', '_sha2', '_sha3',  # pip
+                     '_bz2', '_lzma',  # pandas
+                     ]
+    allowed_libs = ['m', 'dl', 'expat']
+
+    def should_include(name: str, ext: Dict[str, Any]):
+        if ext['required'] or name in required_mods:
+            return True
+        for lib in ext.get('links', []):
+            if lib['name'] not in allowed_libs:
+                return False
+        return True
     included_ext = {name: variants[0] for name, variants in extensions.items() if should_include(name, variants[0])}
     print('Included extensions:', list(included_ext.keys()))
 
@@ -128,5 +136,8 @@ def build_lldb_python(python_dist: Path, output: Path, cfg: TargetConfig):
             for lib in ext.get('links', []):
                 dylib = lib.get('path_dynamic')
                 if dylib:
+                    # https://github.com/indygreg/python-build-standalone/issues/379
+                    if lib['name'] in ['libcrypto-1_1-x64', 'libssl-1_1-x64']:
+                        dylib = dylib.replace('-1_1-x64', '-3-x64')
                     shutil.copy(python_dist / dylib, output / 'DLLs')
         return (python_dist / 'install' / 'include'), (python_dist / 'install' / 'libs' / f'python{major}{minor}.lib')

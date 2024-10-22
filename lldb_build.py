@@ -30,7 +30,7 @@ python_standalone = source_dir / 'arch' / system / 'python'
 
 if not python.exists():
     python.mkdir(exist_ok=True)
-    pattern = str(python_standalone / ('cpython-*-' + arch + '-*-' + system + '-*.tar.zst'))
+    pattern = str(python_standalone / ('cpython-*-' + arch + '*-*-' + system + '-*.tar.zst'))
     cpython_archive = glob(pattern)[0]
     zstd = subprocess.Popen(['zstd', '-dcf', cpython_archive], stdout=subprocess.PIPE)
     check_call(['tar', '--strip-components=1', '-xf', '-'], stdin=zstd.stdout, cwd=str(python))
