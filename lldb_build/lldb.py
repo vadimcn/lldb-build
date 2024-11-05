@@ -78,6 +78,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Windows':
+        targets_to_build += ['lldb-server']
         cmake_args.update({
             'CMAKE_C_FLAGS': '-DLIBXML_STATIC=1',
             'CMAKE_CXX_FLAGS': '-DLIBXML_STATIC=1',
@@ -210,6 +211,7 @@ def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: Target
             lldb_files = [
                 'bin/lldb.exe',
                 'bin/lldb-argdumper.exe',
+                'bin/lldb-server.exe',
                 'bin/liblldb.dll',
                 'bin/vcruntime*.dll',
                 'lib/liblldb.lib',
@@ -219,6 +221,7 @@ def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: Target
             lldb_debug_files = [
                 'bin/lldb.pdb',
                 'bin/lldb-argdumper.pdb',
+                'bin/lldb-server.pdb',
                 'bin/llvm-dwarfdump.exe',
                 'bin/llvm-dwarfdump.pdb',
                 'bin/llvm-pdbutil.exe',
