@@ -10,7 +10,7 @@ resources:
   - repository: llvm-project
     type: git
     name: llvm/llvm-project
-    ref: codelldb/19.x
+    ref: codelldb/20.x
 
   - repository: libxml2
     type: github
