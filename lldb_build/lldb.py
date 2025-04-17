@@ -54,7 +54,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
 
     cmake_args.update(cfg)  # type: ignore
 
-    targets_to_build = ['lldb', 'llvm-dwarfdump', 'llvm-pdbutil', 'llvm-readobj']
+    targets_to_build = ['lldb', 'lldb-server', 'llvm-dwarfdump', 'llvm-pdbutil', 'llvm-readobj']
 
     if cfg['CMAKE_SYSTEM_PROCESSOR'] != platform.machine():
         cmake_args.update({
@@ -63,7 +63,6 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Linux':
-        targets_to_build += ['lldb-server']
         cmake_args.update({
             'CMAKE_EXE_LINKER_FLAGS': cmake_args.get('CMAKE_EXE_LINKER_FLAGS', '') + ' -L' + str(python_lib.parent),
             'CMAKE_SHARED_LINKER_FLAGS': cmake_args.get('CMAKE_SHARED_LINKER_FLAGS', '') + ' -L' + str(python_lib.parent),
@@ -78,7 +77,6 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Windows':
-        targets_to_build += ['lldb-server']
         cmake_args.update({
             'CMAKE_C_FLAGS': '-DLIBXML_STATIC=1',
             'CMAKE_CXX_FLAGS': '-DLIBXML_STATIC=1',
@@ -182,6 +180,7 @@ def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: Target
             lldb_files = [
                 'bin/lldb',
                 'bin/lldb-argdumper',
+                'bin/lldb-server',
                 'bin/debugserver',
             ]
             files = rel_glob(llvm_build, lldb_files)
@@ -196,6 +195,7 @@ def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: Target
                 'bin/llvm-readobj',
                 'bin/lldb.dSYM/**/*',
                 'bin/lldb-argdumper.dSYM/**/*',
+                'bin/lldb-server.dSYM/**/*',
                 'bin/llvm-dwarfdump.dSYM/**/*',
                 'bin/llvm-pdbutil.dSYM/**/*',
                 'bin/llvm-readobj.dSYM/**/*',
