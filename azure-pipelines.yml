@@ -105,7 +105,7 @@ jobs:
   strategy:
     matrix:
       x86_64:
-        DeploymentTarget: '10.10'
+        DeploymentTarget: '10.12'
         Triple: 'x86_64-apple-darwin'
       aarch64:
         DeploymentTarget: '11.0'
