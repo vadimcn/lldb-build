@@ -98,12 +98,12 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
     return llvm_build
 
 
-def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: TargetConfig,
+def package_lldb(llvm_src: Path, llvm_build: Path, python_dist: Path, cfg: TargetConfig,
                  output_zip: Path, debug_output_zip: Path, release_package: bool = False):
 
     compression = zipfile.ZIP_DEFLATED if release_package else zipfile.ZIP_STORED
-    with tempfile.TemporaryDirectory() as temp_dir,\
-            zipfile.ZipFile(output_zip, 'w', compression=compression) as zip,\
+    with tempfile.TemporaryDirectory() as temp_dir, \
+            zipfile.ZipFile(output_zip, 'w', compression=compression) as zip, \
             zipfile.ZipFile(debug_output_zip, 'w', compression=compression) as debug_zip:
 
         if not release_package:
@@ -213,10 +213,21 @@ def package_lldb(llvm_src:Path, llvm_build: Path, python_dist: Path, cfg: Target
                 'bin/lldb-argdumper.exe',
                 'bin/lldb-server.exe',
                 'bin/liblldb.dll',
-                'bin/vcruntime*.dll',
                 'lib/liblldb.lib',
             ]
             add_to_zip(rel_glob(llvm_build, lldb_files), zip)
+
+            redist = Path(os.environ['VCToolsRedistDir'])
+            vcrt_files = [
+                'x64/Microsoft.VC*.CRT/vcruntime140*.dll',
+                'x64/Microsoft.VC*.CRT/msvcp140.dll',
+            ]
+
+            def set_prefix(files: PathDuples):
+                for abspath, _ in files:
+                    yield abspath, Path('bin') / abspath.name
+
+            compose(rel_glob(redist, vcrt_files), set_prefix, (add_to_zip, zip))
 
             lldb_debug_files = [
                 'bin/lldb.pdb',
