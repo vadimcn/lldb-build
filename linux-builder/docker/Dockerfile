@@ -1,7 +1,10 @@
 FROM debian:bookworm-slim AS build
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update
-RUN apt-get install \
+RUN apt-get install -y --no-install-recommends \
+    binutils \
     xz-utils
 
 # Install clang
@@ -39,7 +42,7 @@ RUN ( echo 'quiet "true";'; \
     ) > /etc/apt/apt.conf.d/99-builder
 
 RUN apt-get update
-RUN apt-get install \
+RUN apt-get install -y --no-install-recommends \
     ca-certificates \
     apt-transport-https \
     sudo \
@@ -58,7 +61,7 @@ RUN echo "/usr/local/lib/x86_64-unknown-linux-gnu" > /etc/ld.so.conf.d/clang_lib
 RUN ldconfig
 
 # Install node
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install nodejs
 
 # Install rustup
@@ -69,7 +72,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -v -y --profile minimal --default-
     && chmod -R a+w $RUSTUP_HOME $CARGO_HOME
 
 # Build tools
-RUN apt-get install \
+RUN apt-get install -y --no-install-recommends \
     automake \
     binutils \
     bison \
@@ -88,14 +91,40 @@ RUN apt-get install \
     unzip \
     xz-utils \
     zip \
-    zstd
+    zstd \
+    7zip
+
+# VSCode runtime dependencies
+RUN apt-get install -y --no-install-recommends \
+    libgtk-3-0 \
+    libglib2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libdbus-1-3 \
+    libatk1.0-0 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatspi2.0-0 \
+    libcairo2 \
+    libcurl4 \
+    libexpat1 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libudev1 \
+    libx11-6 \
+    libxcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxkbfile1 \
+    libxrandr2 \
+    xdg-utils \
+    xvfb
 
 # Sysroot with legacy libs
 COPY stretch /stretch
-
-# Defult to ld.gold
-RUN update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.gold" 20 && \
-    update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.bfd" 10
 
 # Configure linker for cargo
 ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang \
