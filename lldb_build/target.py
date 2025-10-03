@@ -17,6 +17,7 @@ class RequiredTargetConfig(TypedDict, total=True):
 class TargetConfig(RequiredTargetConfig, total=False):
     TARGET_PYTHON_ARCHIVE: str
     CMAKE_OSX_ARCHITECTURES: str
+    CMAKE_CXX_STANDARD_LIBRARIES: str
     CMAKE_EXE_LINKER_FLAGS: str
     CMAKE_SHARED_LINKER_FLAGS: str
     CMAKE_SYSROOT: str
@@ -35,11 +36,12 @@ linux: TargetConfig = {
     'CMAKE_SYSTEM_PROCESSOR': '???',
     'CMAKE_CXX_COMPILER': 'clang++',
     'CMAKE_C_COMPILER': 'clang',
-    'CMAKE_CXX_FLAGS': '-stdlib=libc++',
-    'CMAKE_C_FLAGS': '',
+    'CMAKE_CXX_FLAGS': '-fPIC -stdlib=libc++ -nostdlib++',
+    'CMAKE_C_FLAGS': '-fPIC',
     'CMAKE_STRIP': 'llvm-strip',
-    'CMAKE_EXE_LINKER_FLAGS': '-fuse-ld=lld -stdlib=libc++ -static-libstdc++ -static-libgcc -Wl,--push-state,-Bstatic,-lc++abi,--pop-state',
-    'CMAKE_SHARED_LINKER_FLAGS': '-fuse-ld=lld -stdlib=libc++ -static-libstdc++ -static-libgcc -Wl,--push-state,-Bstatic,-lc++abi,--pop-state',
+    'CMAKE_CXX_STANDARD_LIBRARIES': '-l:libc++.a -l:libc++abi.a -l:libunwind.a',
+    'CMAKE_EXE_LINKER_FLAGS': '-fuse-ld=lld',
+    'CMAKE_SHARED_LINKER_FLAGS': '-fuse-ld=lld',
 }
 
 
@@ -70,24 +72,24 @@ windows: TargetConfig = {
 targets: Dict[str, TargetConfig] = {
     'x86_64-linux-gnu': update_cfg(linux, {
         'CMAKE_SYSTEM_PROCESSOR': 'x86_64',
-        'CMAKE_C_FLAGS': '-target x86_64-linux-gnu -fPIC',
-        'CMAKE_CXX_FLAGS': '-target x86_64-linux-gnu -fPIC -stdlib=libc++',
+        'CMAKE_C_FLAGS': '-target x86_64-linux-gnu ' + linux['CMAKE_C_FLAGS'],
+        'CMAKE_CXX_FLAGS': '-target x86_64-linux-gnu ' + linux['CMAKE_CXX_FLAGS'],
+        'CMAKE_CXX_STANDARD_LIBRARIES': '-rtlib=compiler-rt ' + linux['CMAKE_CXX_STANDARD_LIBRARIES'],
     }),
     'aarch64-linux-gnu': update_cfg(linux, {
         'TARGET_PYTHON_ARCHIVE': 'cpython-*-aarch64-*-linux-*.tar.zst',
         'CMAKE_SYSTEM_PROCESSOR': 'aarch64',
-        'CMAKE_C_FLAGS': '-target aarch64-linux-gnu -fPIC',
-        'CMAKE_CXX_FLAGS': '-target aarch64-linux-gnu -fPIC -stdlib=libc++',
+        'CMAKE_C_FLAGS': '-target aarch64-linux-gnu ' + linux['CMAKE_C_FLAGS'],
+        'CMAKE_CXX_FLAGS': '-target aarch64-linux-gnu ' + linux['CMAKE_CXX_FLAGS'],
+        'CMAKE_CXX_STANDARD_LIBRARIES': '-rtlib=compiler-rt ' + linux['CMAKE_CXX_STANDARD_LIBRARIES'],
         'LLVM_HOST_TRIPLE': 'aarch64-linux-gnu',
         'LLVM_TARGET_ARCH': 'aarch64',
-        'CMAKE_EXE_LINKER_FLAGS': linux['CMAKE_EXE_LINKER_FLAGS'] + ' /usr/local/lib/clang/15.0.6/lib/aarch64-unknown-linux-gnu/libclang_rt.builtins.a',
-        'CMAKE_SHARED_LINKER_FLAGS': linux['CMAKE_SHARED_LINKER_FLAGS'] + ' /usr/local/lib/clang/15.0.6/lib/aarch64-unknown-linux-gnu/libclang_rt.builtins.a',
     }),
     'arm-linux-gnueabihf': update_cfg(linux, {
         'TARGET_PYTHON_ARCHIVE': 'cpython-*-arm*-linux-*.tar.zst',
         'CMAKE_SYSTEM_PROCESSOR': 'arm',
-        'CMAKE_C_FLAGS': '-target armv7-linux-gnueabihf -fPIC',
-        'CMAKE_CXX_FLAGS': '-target armv7-linux-gnueabihf -fPIC -stdlib=libc++',
+        'CMAKE_C_FLAGS': '-target armv7-linux-gnueabihf ' + linux['CMAKE_C_FLAGS'],
+        'CMAKE_CXX_FLAGS': '-target armv7-linux-gnueabihf ' + linux['CMAKE_CXX_FLAGS'],
         'LLVM_HOST_TRIPLE': 'arm-linux-gnueabihf',
         'LLVM_TARGET_ARCH': 'arm',
     }),

@@ -1,0 +1,241 @@
+name: Build LLDB
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      SCCACHE_GHA_ENABLED: true
+      
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_triple: x86_64-linux-gnu
+          - target_triple: aarch64-linux-gnu
+          - target_triple: arm-linux-gnueabihf
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libc6-dev swig
+
+          mkdir -p $RUNNER_TEMP/ps
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64_v2-unknown-linux-gnu-pgo-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-aarch64-unknown-linux-gnu-noopt-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-armv7-unknown-linux-gnueabihf-noopt-full.tar.zst
+
+          mkdir -p $RUNNER_TEMP/sysroot
+          wget -q -O - https://github.com/vadimcn/lldb-build/releases/download/blobs/stretch-sysroot.tar.zst | zstd -dcf | tar -xf - -C $RUNNER_TEMP/sysroot
+
+          mkdir -p $RUNNER_TEMP/clang
+          wget -q -O - https://github.com/vadimcn/lldb-build/releases/download/blobs/clang-15.tar.zst | zstd -dcf | tar -xf - -C $RUNNER_TEMP/clang
+          OLD_PATH=$(<$GITHUB_PATH)
+          echo "$RUNNER_TEMP/clang/bin" > $GITHUB_PATH
+          echo "$OLD_PATH" >> $GITHUB_PATH
+
+      - name: Submodules
+        run: git submodule update --init --depth 1
+
+      - name: Build
+        run: |
+          python3 $GITHUB_WORKSPACE/lldb_build.py \
+            --build-dir=$RUNNER_TEMP/build \
+            --sysroot=$RUNNER_TEMP/sysroot \
+            --python-standalone=$RUNNER_TEMP/ps \
+            --ccache=sccache \
+            --target=${{ matrix.target_triple }} \
+            --build-type=MinSizeRel \
+            --release-package
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb--${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb--*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-debug-${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb-debug-*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+  macos:
+    name: MacOS
+    runs-on: ${{ matrix.image }}
+    timeout-minutes: 360
+    env:
+      SCCACHE_GHA_ENABLED: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_triple: x86_64-apple-darwin
+            mac_deployment: "10.12"
+            image: macos-15-intel
+
+          - target_triple: aarch64-apple-darwin
+            mac_deployment: "11.0"
+            image: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Setup
+        run: |
+          brew install pcre automake swig
+
+          mkdir -p $RUNNER_TEMP/ps
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-apple-darwin-pgo-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-aarch64-apple-darwin-pgo-full.tar.zst
+
+          echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.mac_deployment }}" >> $GITHUB_ENV
+      
+      - name: Submodules
+        run: git submodule update --init --depth 1
+
+      - name: Build
+        run: |
+          python3 $GITHUB_WORKSPACE/lldb_build.py \
+            --build-dir=$RUNNER_TEMP/build \
+            --python-standalone=$RUNNER_TEMP/ps \
+            --ccache=sccache \
+            --target=${{ matrix.target_triple }} \
+            --build-type=MinSizeRel \
+            --release-package
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb--${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb--*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-debug-${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb-debug-*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 360
+    env:
+      SCCACHE_GHA_ENABLED: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_triple: x86_64-windows-msvc
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Setup
+        shell: bash
+        run: |
+          choco install wget -y
+
+          mkdir -p $RUNNER_TEMP/ps
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
+
+      - name: Submodules
+        shell: bash
+        run: git submodule update --init --depth 1
+
+      - name: Setup MSVC environment
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set >> %GITHUB_ENV%
+
+      - name: Build
+        shell: bash
+        run: |
+          python3 $GITHUB_WORKSPACE/lldb_build.py \
+            --build-dir=$RUNNER_TEMP/build \
+            --python-standalone=$RUNNER_TEMP/ps \
+            --ccache=sccache \
+            --target=${{ matrix.target_triple }} \
+            --build-type=MinSizeRel \
+            --release-package 
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb--${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb--*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-debug-${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb-debug-*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: 
+      - linux
+      - macos
+      - windows
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        merge-multiple: true
+
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}-${{ github.run_number }}
+        target_commitish: ${{ github.sha }}
+        draft: true
+        files: |
+          artifacts/**/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
