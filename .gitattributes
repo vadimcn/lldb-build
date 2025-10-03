@@ -1,2 +1,0 @@
-arch/** filter=lfs diff=lfs merge=lfs -text
-linux-builder/docker/stretch/** filter=lfs diff=lfs merge=lfs -text

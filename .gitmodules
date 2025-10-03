@@ -1,0 +1,6 @@
+[submodule "libxml2"]
+	path = libxml2
+	url = https://github.com/GNOME/libxml2.git
+[submodule "llvm-project"]
+	path = llvm-project
+	url = https://github.com/vadimcn/llvm-project.git

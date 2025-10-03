@@ -1,0 +1,239 @@
+name: Build LLDB
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_triple: x86_64-linux-gnu
+          - target_triple: aarch64-linux-gnu
+          - target_triple: arm-linux-gnueabihf
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Restore sccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-
+            sccache-${{ runner.os }}-${{ matrix.target_triple }}-
+            sccache-${{ runner.os }}-
+
+      - name: Setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libc6-dev swig zstd p7zip-full
+
+          mkdir -p $RUNNER_TEMP/bin
+          wget -q https://github.com/vadimcn/lldb-build/releases/download/blobs/linux-bin.zip
+          7z x linux-bin.zip -o$RUNNER_TEMP/bin
+          echo "$RUNNER_TEMP/bin" >> $GITHUB_PATH
+
+          mkdir -p $RUNNER_TEMP/ps
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64_v2-unknown-linux-gnu-pgo-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-aarch64-unknown-linux-gnu-noopt-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-armv7-unknown-linux-gnueabihf-noopt-full.tar.zst
+
+          mkdir -p $RUNNER_TEMP/sysroot
+          wget -q -O - https://github.com/vadimcn/lldb-build/releases/download/blobs/stretch-sysroot.tar.zst | zstd -dcf | tar -xf - -C $RUNNER_TEMP/sysroot
+
+          mkdir -p $RUNNER_TEMP/clang
+          wget -q -O - https://github.com/vadimcn/lldb-build/releases/download/blobs/clang-15.tar.zst | zstd -dcf | tar -xf - -C $RUNNER_TEMP/clang
+          OLD_PATH=$(<$GITHUB_PATH)
+          echo "$RUNNER_TEMP/clang/bin" > $GITHUB_PATH
+          echo "$OLD_PATH" >> $GITHUB_PATH
+
+      - name: Clang info
+        run: |
+          which clang || true
+          clang --version || true
+          lld --version || true
+
+      - name: Submodules
+        run: git submodule update --init
+
+      - name: Build
+        run: |
+          python3 $GITHUB_WORKSPACE/lldb_build.py \
+            --build-dir=$RUNNER_TEMP/build \
+            --sysroot=$RUNNER_TEMP/sysroot \
+            --python-standalone=$RUNNER_TEMP/ps \
+            --ccache=sccache \
+            --target=${{ matrix.target_triple }} \
+            --build-type=MinSizeRel \
+            --release-package
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb--${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/*.zip
+          if-no-files-found: error
+
+      - name: Save sccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  macos:
+    name: MacOS
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 360
+    env:
+      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_triple: x86_64-apple-darwin
+            mac_deployment: "10.12"
+            runner: macos-13
+          - target_triple: aarch64-apple-darwin
+            mac_deployment: "11.0"
+            runner: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Restore sccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-
+            sccache-${{ runner.os }}-${{ matrix.target_triple }}-
+            sccache-${{ runner.os }}-
+
+      - name: Setup
+        run: |
+          brew install pcre automake ninja pkg-config swig
+
+          mkdir -p $RUNNER_TEMP/bin
+          wget -q https://github.com/vadimcn/lldb-build/releases/download/blobs/macos-bin.zip
+          7z x macos-bin.zip -o$RUNNER_TEMP/bin
+          echo "$RUNNER_TEMP/bin" >> $GITHUB_PATH
+
+          mkdir -p $RUNNER_TEMP/ps
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-apple-darwin-pgo-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-aarch64-apple-darwin-pgo-full.tar.zst
+
+          echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.mac_deployment }}" >> $GITHUB_ENV
+      
+      - name: Submodules
+        run: git submodule update --init
+
+      - name: Build
+        run: |
+          python3 $GITHUB_WORKSPACE/lldb_build.py \
+            --build-dir=$RUNNER_TEMP/build \
+            --python-standalone=$RUNNER_TEMP/ps \
+            --ccache=sccache \
+            --target=${{ matrix.target_triple }} \
+            --build-type=MinSizeRel \
+            --release-package
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb--${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/*.zip
+          if-no-files-found: error
+
+      - name: Save sccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 360
+    env:
+      SCCACHE_DIR: ${{ github.workspace }}\.sccache
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_triple: x86_64-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Restore sccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-
+            sccache-${{ runner.os }}-${{ matrix.target_triple }}-
+            sccache-${{ runner.os }}-
+
+      - name: Setup
+        shell: bash
+        run: |
+          choco install wget ninja -y
+
+          mkdir -p $RUNNER_TEMP/bin
+          wget -q https://github.com/vadimcn/lldb-build/releases/download/blobs/windows-bin.zip
+          7z x windows-bin.zip -o$RUNNER_TEMP/bin 
+          echo "$RUNNER_TEMP/bin" >> $GITHUB_PATH
+
+          mkdir -p $RUNNER_TEMP/ps
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
+
+      - name: Submodules
+        shell: bash
+        run: git submodule update --init
+
+      - name: Setup MSVC environment
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set >> %GITHUB_ENV%
+
+      - name: Build
+        shell: bash
+        run: |
+          python3 $GITHUB_WORKSPACE/lldb_build.py \
+            --build-dir=$RUNNER_TEMP/build \
+            --python-standalone=$RUNNER_TEMP/ps \
+            --ccache=sccache \
+            --target=${{ matrix.target_triple }} \
+            --build-type=MinSizeRel \
+            --release-package 
+
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb--${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/*.zip
+          if-no-files-found: error
+
+      - name: Save sccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
