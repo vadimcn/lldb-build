@@ -64,7 +64,7 @@ jobs:
           lld --version || true
 
       - name: Submodules
-        run: git submodule update --init
+        run: git submodule update --init --depth 1
 
       - name: Build
         run: |
@@ -138,7 +138,7 @@ jobs:
           echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.mac_deployment }}" >> $GITHUB_ENV
       
       - name: Submodules
-        run: git submodule update --init
+        run: git submodule update --init --depth 1
 
       - name: Build
         run: |
@@ -205,7 +205,7 @@ jobs:
 
       - name: Submodules
         shell: bash
-        run: git submodule update --init
+        run: git submodule update --init --depth 1
 
       - name: Setup MSVC environment
         shell: cmd
