@@ -72,14 +72,16 @@ windows: TargetConfig = {
 targets: Dict[str, TargetConfig] = {
     'x86_64-linux-gnu': update_cfg(linux, {
         'CMAKE_SYSTEM_PROCESSOR': 'x86_64',
-        'CMAKE_C_FLAGS': '-target x86_64-linux-gnu  -rtlib=compiler-rt ' + linux['CMAKE_C_FLAGS'],
-        'CMAKE_CXX_FLAGS': '-target x86_64-linux-gnu  -rtlib=compiler-rt ' + linux['CMAKE_CXX_FLAGS'],
+        'CMAKE_C_FLAGS': '-target x86_64-linux-gnu ' + linux['CMAKE_C_FLAGS'],
+        'CMAKE_CXX_FLAGS': '-target x86_64-linux-gnu ' + linux['CMAKE_CXX_FLAGS'],
+        'CMAKE_CXX_STANDARD_LIBRARIES': '-rtlib=compiler-rt ' + linux['CMAKE_CXX_STANDARD_LIBRARIES'],
     }),
     'aarch64-linux-gnu': update_cfg(linux, {
         'TARGET_PYTHON_ARCHIVE': 'cpython-*-aarch64-*-linux-*.tar.zst',
         'CMAKE_SYSTEM_PROCESSOR': 'aarch64',
-        'CMAKE_C_FLAGS': '-target aarch64-linux-gnu -rtlib=compiler-rt ' + linux['CMAKE_C_FLAGS'],
-        'CMAKE_CXX_FLAGS': '-target aarch64-linux-gnu -rtlib=compiler-rt ' + linux['CMAKE_CXX_FLAGS'],
+        'CMAKE_C_FLAGS': '-target aarch64-linux-gnu ' + linux['CMAKE_C_FLAGS'],
+        'CMAKE_CXX_FLAGS': '-target aarch64-linux-gnu ' + linux['CMAKE_CXX_FLAGS'],
+        'CMAKE_CXX_STANDARD_LIBRARIES': '-rtlib=compiler-rt ' + linux['CMAKE_CXX_STANDARD_LIBRARIES'],
         'LLVM_HOST_TRIPLE': 'aarch64-linux-gnu',
         'LLVM_TARGET_ARCH': 'aarch64',
     }),
