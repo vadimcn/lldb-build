@@ -80,8 +80,8 @@ targets: Dict[str, TargetConfig] = {
         'CMAKE_CXX_FLAGS': '-target aarch64-linux-gnu -fPIC -stdlib=libc++',
         'LLVM_HOST_TRIPLE': 'aarch64-linux-gnu',
         'LLVM_TARGET_ARCH': 'aarch64',
-        'CMAKE_EXE_LINKER_FLAGS': linux['CMAKE_EXE_LINKER_FLAGS'] + ' /usr/local/lib/clang/15.0.6/lib/aarch64-unknown-linux-gnu/libclang_rt.builtins.a',
-        'CMAKE_SHARED_LINKER_FLAGS': linux['CMAKE_SHARED_LINKER_FLAGS'] + ' /usr/local/lib/clang/15.0.6/lib/aarch64-unknown-linux-gnu/libclang_rt.builtins.a',
+        # 'CMAKE_EXE_LINKER_FLAGS': linux['CMAKE_EXE_LINKER_FLAGS'] + ' /usr/local/lib/clang/15.0.6/lib/aarch64-unknown-linux-gnu/libclang_rt.builtins.a',
+        # 'CMAKE_SHARED_LINKER_FLAGS': linux['CMAKE_SHARED_LINKER_FLAGS'] + ' /usr/local/lib/clang/15.0.6/lib/aarch64-unknown-linux-gnu/libclang_rt.builtins.a',
     }),
     'arm-linux-gnueabihf': update_cfg(linux, {
         'TARGET_PYTHON_ARCHIVE': 'cpython-*-arm*-linux-*.tar.zst',
