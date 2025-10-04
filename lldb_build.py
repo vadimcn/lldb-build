@@ -29,7 +29,7 @@ else:
         arch = 'aarch64'
     python3 = python_dir / 'install' / 'bin' / 'python3'
 
-print('Detected', system, arch)
+print('Host is', system, arch)
 
 if not python_dir.exists():
     python_dir.mkdir(exist_ok=True)
