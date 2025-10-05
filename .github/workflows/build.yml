@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Restore sccache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.SCCACHE_DIR }}
@@ -57,12 +57,6 @@ jobs:
           echo "$RUNNER_TEMP/clang/bin" > $GITHUB_PATH
           echo "$OLD_PATH" >> $GITHUB_PATH
 
-      - name: Clang info
-        run: |
-          which clang || true
-          clang --version || true
-          lld --version || true
-
       - name: Submodules
         run: git submodule update --init --depth 1
 
@@ -84,12 +78,16 @@ jobs:
           path: ${{ runner.temp }}/build/*.zip
           if-no-files-found: error
 
-      - name: Save sccache
+      - name: Save cache
         if: always()
         uses: actions/cache/save@v4
         with:
           path: ${{ env.SCCACHE_DIR }}
           key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Cache stats
+        if: always()
+        run: sccache --show-stats
 
   macos:
     name: MacOS
@@ -112,7 +110,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Restore sccache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.SCCACHE_DIR }}
@@ -157,12 +155,16 @@ jobs:
           path: ${{ runner.temp }}/build/*.zip
           if-no-files-found: error
 
-      - name: Save sccache
+      - name: Save cache
         if: always()
         uses: actions/cache/save@v4
         with:
           path: ${{ env.SCCACHE_DIR }}
           key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Cache stats
+        if: always()
+        run: sccache --show-stats
 
   windows:
     name: Windows
@@ -180,7 +182,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Restore sccache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.SCCACHE_DIR }}
@@ -231,9 +233,13 @@ jobs:
           path: ${{ runner.temp }}/build/*.zip
           if-no-files-found: error
 
-      - name: Save sccache
+      - name: Save cache
         if: always()
         uses: actions/cache/save@v4
         with:
           path: ${{ env.SCCACHE_DIR }}
           key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Cache stats
+        if: always()
+        run: sccache --show-stats
