@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
-      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      SCCACHE_GHA_ENABLED: true
+      
     strategy:
       fail-fast: false
       matrix:
@@ -18,30 +19,19 @@ jobs:
           - target_triple: x86_64-linux-gnu
           - target_triple: aarch64-linux-gnu
           - target_triple: arm-linux-gnueabihf
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Restore cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-
-            sccache-${{ runner.os }}-${{ matrix.target_triple }}-
-            sccache-${{ runner.os }}-
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Setup
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libc6-dev swig zstd p7zip-full
-
-          mkdir -p $RUNNER_TEMP/bin
-          wget -q https://github.com/vadimcn/lldb-build/releases/download/blobs/linux-bin.zip
-          7z x linux-bin.zip -o$RUNNER_TEMP/bin
-          echo "$RUNNER_TEMP/bin" >> $GITHUB_PATH
+          sudo apt-get install -y build-essential libc6-dev swig
 
           mkdir -p $RUNNER_TEMP/ps
           wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64_v2-unknown-linux-gnu-pgo-full.tar.zst
@@ -87,56 +77,36 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
-      - name: Save cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Cache stats
-        if: always()
-        run: sccache --show-stats
-
   macos:
     name: MacOS
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 360
     env:
-      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      SCCACHE_GHA_ENABLED: true
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - target_triple: x86_64-apple-darwin
             mac_deployment: "10.12"
-            runner: macos-13
+            image: macos-15-intel
+
           - target_triple: aarch64-apple-darwin
             mac_deployment: "11.0"
-            runner: macos-latest
+            image: macos-15
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Restore cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-
-            sccache-${{ runner.os }}-${{ matrix.target_triple }}-
-            sccache-${{ runner.os }}-
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Setup
         run: |
-          brew install pcre automake ninja pkg-config swig
-
-          mkdir -p $RUNNER_TEMP/bin
-          wget -q https://github.com/vadimcn/lldb-build/releases/download/blobs/macos-bin.zip
-          7z x macos-bin.zip -o$RUNNER_TEMP/bin
-          echo "$RUNNER_TEMP/bin" >> $GITHUB_PATH
+          brew install pcre automake swig
 
           mkdir -p $RUNNER_TEMP/ps
           wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-apple-darwin-pgo-full.tar.zst
@@ -173,52 +143,31 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
-      - name: Save cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Cache stats
-        if: always()
-        run: sccache --show-stats
-
   windows:
     name: Windows
     runs-on: windows-latest
     timeout-minutes: 360
     env:
-      SCCACHE_DIR: ${{ github.workspace }}\.sccache
+      SCCACHE_GHA_ENABLED: true
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - target_triple: x86_64-windows-msvc
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Restore cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.ref_name }}-
-            sccache-${{ runner.os }}-${{ matrix.target_triple }}-
-            sccache-${{ runner.os }}-
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Setup
         shell: bash
         run: |
-          choco install wget ninja -y
-
-          mkdir -p $RUNNER_TEMP/bin
-          wget -q https://github.com/vadimcn/lldb-build/releases/download/blobs/windows-bin.zip
-          7z x windows-bin.zip -o$RUNNER_TEMP/bin 
-          echo "$RUNNER_TEMP/bin" >> $GITHUB_PATH
+          choco install wget -y
 
           mkdir -p $RUNNER_TEMP/ps
           wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
@@ -259,14 +208,3 @@ jobs:
           path: ${{ runner.temp }}/build/lldb-debug-*.zip
           compression-level: 0
           if-no-files-found: error
-
-      - name: Save cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.SCCACHE_DIR }}
-          key: sccache-${{ runner.os }}-${{ matrix.target_triple }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Cache stats
-        if: always()
-        run: sccache --show-stats
