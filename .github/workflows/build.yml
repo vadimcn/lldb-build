@@ -75,7 +75,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lldb--${{ matrix.target_triple }}
-          path: ${{ runner.temp }}/build/*.zip
+          path: ${{ runner.temp }}/build/lldb--*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-debug-${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb-debug-*.zip
+          compression-level: 0
           if-no-files-found: error
 
       - name: Save cache
@@ -152,7 +161,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lldb--${{ matrix.target_triple }}
-          path: ${{ runner.temp }}/build/*.zip
+          path: ${{ runner.temp }}/build/lldb--*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-debug-${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb-debug-*.zip
+          compression-level: 0
           if-no-files-found: error
 
       - name: Save cache
@@ -230,7 +248,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lldb--${{ matrix.target_triple }}
-          path: ${{ runner.temp }}/build/*.zip
+          path: ${{ runner.temp }}/build/lldb--*.zip
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-debug-${{ matrix.target_triple }}
+          path: ${{ runner.temp }}/build/lldb-debug-*.zip
+          compression-level: 0
           if-no-files-found: error
 
       - name: Save cache
