@@ -3,6 +3,7 @@ name: Build LLDB
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   linux:
@@ -79,7 +80,7 @@ jobs:
 
   macos:
     name: MacOS
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.image }}
     timeout-minutes: 360
     env:
       SCCACHE_GHA_ENABLED: true
