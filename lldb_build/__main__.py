@@ -35,14 +35,22 @@ def main(args: Any):
     python_exe = Path(sys.executable)
     python_inc, python_lib = build_lldb_python(python_dist, python_lldb, cfg)
 
+    cfg['Python3_EXECUTABLE'] = str(python_exe)
+    cfg['Python3_INCLUDE_DIRS'] = str(python_inc)
+    cfg['Python3_LIBRARIES'] = str(python_lib)
+
     libxml_inc, libxml_lib = build_libxml2(work_dir, cfg, args.build_type)
+    cfg['LIBXML2_INCLUDE_DIR'] = str(libxml_inc)
+    cfg['LIBXML2_LIBRARY'] = str(libxml_lib)
+
     if cfg.get('LLDB_ENABLE_LIBEDIT') == 'ON':
         build_libedit(work_dir, cfg, args.build_type)
+        cfg['LIBEDIT_INCLUDE_DIR'] = str(libxml_inc)
+        cfg['LIBEDIT_LIBRARY'] = str(libxml_lib)
 
     llvm_build = build_lldb(work_dir, cfg, args.build_type,
                             ccache=args.ccache,
-                            libxml_inc=libxml_inc, libxml_lib=libxml_lib,
-                            python_exe=python_exe, python_inc=python_inc, python_lib=python_lib)
+                            python_exe=python_exe, python_lib=python_lib)
 
     lldb_archive = work_dir / f'lldb--{args.target}.zip'
     lldb_debug_archive = work_dir / f'lldb-debug--{args.target}.zip'

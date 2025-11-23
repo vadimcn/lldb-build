@@ -1,36 +1,14 @@
-from typing import Dict, TypedDict, Literal
+from typing import Dict
 import copy
 
 
-class RequiredTargetConfig(TypedDict, total=True):
-    CMAKE_HOST_SYSTEM_NAME: Literal['Linux', 'Darwin', 'Windows']
-    CMAKE_HOST_SYSTEM_PROCESSOR: str
-    CMAKE_SYSTEM_NAME: Literal['Linux', 'Darwin', 'Windows']
-    CMAKE_SYSTEM_PROCESSOR: str
-    CMAKE_C_COMPILER: str
-    CMAKE_CXX_COMPILER: str
-    CMAKE_C_FLAGS: str
-    CMAKE_CXX_FLAGS: str
-    CMAKE_STRIP: str
-
-
-class TargetConfig(RequiredTargetConfig, total=False):
-    TARGET_PYTHON_ARCHIVE: str
-    CMAKE_OSX_ARCHITECTURES: str
-    CMAKE_CXX_STANDARD_LIBRARIES: str
-    CMAKE_EXE_LINKER_FLAGS: str
-    CMAKE_SHARED_LINKER_FLAGS: str
-    CMAKE_SYSROOT: str
-    LLDB_ENABLE_LIBEDIT: str
-
-
-def update_cfg(original: TargetConfig, updates: Dict[str, str]) -> TargetConfig:
+def update_cfg(original: Dict[str, str], updates: Dict[str, str]) -> Dict[str, str]:
     result = copy.deepcopy(original)
-    result.update(updates)  # type: ignore
+    result.update(updates)
     return result
 
 
-linux: TargetConfig = {
+linux = {
     'CMAKE_HOST_SYSTEM_NAME': 'Linux',
     'CMAKE_HOST_SYSTEM_PROCESSOR': 'x86_64',
     'CMAKE_SYSTEM_NAME': 'Linux',
@@ -47,7 +25,7 @@ linux: TargetConfig = {
 }
 
 
-darwin: TargetConfig = {
+darwin = {
     'CMAKE_HOST_SYSTEM_NAME': 'Darwin',
     'CMAKE_HOST_SYSTEM_PROCESSOR': 'x86_64',
     'CMAKE_SYSTEM_NAME': 'Darwin',
@@ -60,7 +38,7 @@ darwin: TargetConfig = {
     'LLDB_ENABLE_LIBEDIT': 'ON',
 }
 
-windows: TargetConfig = {
+windows = {
     'CMAKE_HOST_SYSTEM_NAME': 'Windows',
     'CMAKE_HOST_SYSTEM_PROCESSOR': 'x86_64',
     'CMAKE_SYSTEM_NAME': 'Windows',
@@ -72,7 +50,7 @@ windows: TargetConfig = {
     'CMAKE_STRIP': '',
 }
 
-targets: Dict[str, TargetConfig] = {
+targets: Dict[str, Dict[str, str]] = {
     'x86_64-linux-gnu': update_cfg(linux, {
         'CMAKE_SYSTEM_PROCESSOR': 'x86_64',
         'CMAKE_C_FLAGS': '-target x86_64-linux-gnu ' + linux['CMAKE_C_FLAGS'],
@@ -112,8 +90,8 @@ targets: Dict[str, TargetConfig] = {
 }
 
 
-def get_target_config(target_triple: str) -> TargetConfig:
+def get_target_config(target_triple: str) -> Dict[str, str]:
     cfg = targets.get(target_triple)
     if cfg is not None:
-        return cfg
+        return cfg  # type: ignore
     raise KeyError('Unsupported target triple:', target_triple)
