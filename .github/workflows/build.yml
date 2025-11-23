@@ -48,6 +48,8 @@ jobs:
           echo "$RUNNER_TEMP/clang/bin" > $GITHUB_PATH
           echo "$OLD_PATH" >> $GITHUB_PATH
 
+          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/libedit-20251016-3.1.tar.gz | tar -xzf - -C libedit
+
       - name: Submodules
         run: git submodule update --init --depth 1
 
