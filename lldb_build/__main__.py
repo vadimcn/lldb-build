@@ -7,6 +7,7 @@ from subprocess import check_call
 from typing import Any
 
 from .libxml2 import build_libxml2
+from .libedit import build_libedit
 from .python import build_lldb_python
 from .lldb import build_lldb, package_lldb
 from .target import get_target_config
@@ -35,6 +36,8 @@ def main(args: Any):
     python_inc, python_lib = build_lldb_python(python_dist, python_lldb, cfg)
 
     libxml_inc, libxml_lib = build_libxml2(work_dir, cfg, args.build_type)
+    if cfg.get('LLDB_ENABLE_LIBEDIT') == 'ON':
+        build_libedit(work_dir, cfg, args.build_type)
 
     llvm_build = build_lldb(work_dir, cfg, args.build_type,
                             ccache=args.ccache,

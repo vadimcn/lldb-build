@@ -21,6 +21,7 @@ class TargetConfig(RequiredTargetConfig, total=False):
     CMAKE_EXE_LINKER_FLAGS: str
     CMAKE_SHARED_LINKER_FLAGS: str
     CMAKE_SYSROOT: str
+    LLDB_ENABLE_LIBEDIT: str
 
 
 def update_cfg(original: TargetConfig, updates: Dict[str, str]) -> TargetConfig:
@@ -42,6 +43,7 @@ linux: TargetConfig = {
     'CMAKE_CXX_STANDARD_LIBRARIES': '-l:libc++.a -l:libc++abi.a -l:libunwind.a',
     'CMAKE_EXE_LINKER_FLAGS': '-fuse-ld=lld',
     'CMAKE_SHARED_LINKER_FLAGS': '-fuse-ld=lld',
+    'LLDB_ENABLE_LIBEDIT': 'ON',
 }
 
 
@@ -55,6 +57,7 @@ darwin: TargetConfig = {
     'CMAKE_CXX_FLAGS': '',
     'CMAKE_C_FLAGS': '',
     'CMAKE_STRIP': 'strip',
+    'LLDB_ENABLE_LIBEDIT': 'ON',
 }
 
 windows: TargetConfig = {
