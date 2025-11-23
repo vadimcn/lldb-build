@@ -4,10 +4,9 @@ from itertools import chain
 from pathlib import Path
 from typing import Dict, Any
 from .utils import *
-from .target import TargetConfig
 
 
-def build_lldb_python(python_dist: Path, output: Path, cfg: TargetConfig):
+def build_lldb_python(python_dist: Path, output: Path, cfg: Dict[str, str]):
     '''Package python files needed by LLDB.'''
 
     manifest = json.load(open(python_dist / 'PYTHON.json'))
