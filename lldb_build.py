@@ -39,4 +39,4 @@ if not python_dir.exists():
     check_call(['tar', '--strip-components=1', '-xf', '-'], stdin=zstd.stdout, cwd=str(python_dir))
 
 os.environ['PYTHONPATH'] = str(source_dir)
-check_call([str(python3), '-m', 'lldb_build'] + sys.argv[1:], cwd=str(args.build_dir))
+check_call([str(python3), '-u', '-m', 'lldb_build'] + sys.argv[1:], cwd=str(args.build_dir))

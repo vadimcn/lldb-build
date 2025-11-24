@@ -1,11 +1,11 @@
 from pathlib import Path
 from subprocess import check_call
+from typing import Dict
 
 from .utils import dict_to_cmake, out_of_date
-from .target import TargetConfig
 
 
-def build_libxml2(work_dir: Path, cfg: TargetConfig, build_type: str):
+def build_libxml2(work_dir: Path, cfg: Dict[str,str], build_type: str):
     libxml2_src = Path(__file__).resolve().parent.parent / 'libxml2'
     libxml2_build = work_dir / 'libxml2'
     libxml2_build.mkdir(exist_ok=True)

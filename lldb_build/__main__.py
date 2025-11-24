@@ -18,6 +18,10 @@ def main(args: Any):
     if args.sysroot:
         cfg['CMAKE_SYSROOT'] = str(args.sysroot)
 
+    if args.ccache is not None:
+        cfg['CMAKE_C_COMPILER_LAUNCHER'] = str(args.ccache)
+        cfg['CMAKE_CXX_COMPILER_LAUNCHER'] = str(args.ccache)
+
     target_python_archive = cfg.get('TARGET_PYTHON_ARCHIVE')
     if target_python_archive is None:
         python_dist = work_dir / 'python'
@@ -33,13 +37,16 @@ def main(args: Any):
     python_lldb = work_dir / 'python_lldb'
     python_exe = Path(sys.executable)
     python_inc, python_lib = build_lldb_python(python_dist, python_lldb, cfg)
+    cfg['Python3_EXECUTABLE'] = str(python_exe)
+    cfg['Python3_INCLUDE_DIRS'] = str(python_inc)
+    cfg['Python3_LIBRARIES'] = str(python_lib)
 
     libxml_inc, libxml_lib = build_libxml2(work_dir, cfg, args.build_type)
+    cfg['LIBXML2_INCLUDE_DIR'] = str(libxml_inc)
+    cfg['LIBXML2_LIBRARY'] = str(libxml_lib)
 
     llvm_build = build_lldb(work_dir, cfg, args.build_type,
-                            ccache=args.ccache,
-                            libxml_inc=libxml_inc, libxml_lib=libxml_lib,
-                            python_exe=python_exe, python_inc=python_inc, python_lib=python_lib)
+                            python_exe=python_exe, python_lib=python_lib)
 
     lldb_archive = work_dir / f'lldb--{args.target}.zip'
     lldb_debug_archive = work_dir / f'lldb-debug--{args.target}.zip'
