@@ -1,4 +1,3 @@
-from lldb_build.target import TargetConfig
 import os
 import tempfile
 import zipfile
@@ -12,10 +11,10 @@ from os.path import join
 from .utils import *
 
 
-def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
-               ccache: Optional[Path],
-               libxml_inc: Path, libxml_lib: Path,
-               python_exe: Path, python_inc: Path, python_lib: Path) -> Path:
+def build_lldb(work_dir: Path, cfg: Dict[str, str], build_type: str, *,
+               python_exe: Path,
+               python_lib: Path) -> Path:
+    
     llvm_src = Path(__file__).resolve().parent.parent / 'llvm-project' / 'llvm'
     llvm_build = work_dir / 'llvm'
     llvm_build.mkdir(exist_ok=True)
@@ -40,16 +39,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
         'LLDB_ENABLE_LIBEDIT': 'FALSE',
         'LLDB_ENABLE_CURSES': 'FALSE',
         'LLDB_ENABLE_LZMA': 'FALSE',
-        'Python3_EXECUTABLE': str(python_exe),
-        'Python3_INCLUDE_DIRS': str(python_inc),
-        'Python3_LIBRARIES': str(python_lib),
-        'LIBXML2_INCLUDE_DIR': str(libxml_inc),
-        'LIBXML2_LIBRARY': str(libxml_lib),
     }
-
-    if ccache is not None:
-        cmake_args['CMAKE_C_COMPILER_LAUNCHER'] = str(ccache)
-        cmake_args['CMAKE_CXX_COMPILER_LAUNCHER'] = str(ccache)
 
     cmake_args.update(cfg)  # type: ignore
 
@@ -67,6 +57,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
             'CMAKE_SHARED_LINKER_FLAGS': cmake_args.get('CMAKE_SHARED_LINKER_FLAGS', '') + ' -L' + str(python_lib.parent),
             'LLVM_ENABLE_ZLIB': 'FORCE_ON',
             'LLVM_ENABLE_ZSTD': 'FORCE_ON',
+            'LLVM_USE_STATIC_ZSTD': 'TRUE',
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Darwin':
@@ -97,7 +88,7 @@ def build_lldb(work_dir: Path, cfg: TargetConfig, build_type: str, *,
     return llvm_build
 
 
-def package_lldb(llvm_src: Path, llvm_build: Path, python_dist: Path, cfg: TargetConfig,
+def package_lldb(llvm_src: Path, llvm_build: Path, python_dist: Path, cfg: dict[str, str],
                  output_zip: Path, debug_output_zip: Path, release_package: bool = False):
 
     compression = zipfile.ZIP_DEFLATED if release_package else zipfile.ZIP_STORED

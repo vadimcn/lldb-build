@@ -4,10 +4,9 @@ from itertools import chain
 from pathlib import Path
 from typing import Dict, Any
 from .utils import *
-from .target import TargetConfig
 
 
-def build_lldb_python(python_dist: Path, output: Path, cfg: TargetConfig):
+def build_lldb_python(python_dist: Path, output: Path, cfg: Dict[str, str]):
     '''Package python files needed by LLDB.'''
 
     manifest = json.load(open(python_dist / 'PYTHON.json'))
@@ -55,6 +54,8 @@ def build_lldb_python(python_dist: Path, output: Path, cfg: TargetConfig):
         c_compiler = [cfg['CMAKE_C_COMPILER']] + cfg['CMAKE_C_FLAGS'].split(' ')
         if 'CMAKE_SYSROOT' in cfg:
             c_compiler += ['--sysroot', cfg['CMAKE_SYSROOT']]
+        if 'LLVM_HOST_TRIPLE' in cfg:
+            c_compiler += ['-target', cfg['LLVM_HOST_TRIPLE']]
         osx_arch = cfg.get('CMAKE_OSX_ARCHITECTURES')
         if osx_arch is not None:
             c_compiler += ['-arch', osx_arch]
