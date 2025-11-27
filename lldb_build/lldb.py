@@ -56,6 +56,7 @@ def build_lldb(work_dir: Path, cfg: Dict[str, str], build_type: str, *,
             'CMAKE_SHARED_LINKER_FLAGS': cmake_args.get('CMAKE_SHARED_LINKER_FLAGS', '') + ' -L' + str(python_lib.parent),
             'LLVM_ENABLE_ZLIB': 'FORCE_ON',
             'LLVM_ENABLE_ZSTD': 'FORCE_ON',
+            'LLVM_USE_STATIC_ZSTD': 'TRUE',
         })
 
     if cfg['CMAKE_SYSTEM_NAME'] == 'Darwin':
