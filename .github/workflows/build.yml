@@ -146,7 +146,7 @@ jobs:
 
   windows:
     name: Windows
-    runs-on: windows-latest
+    runs-on: ${{ matrix.image }}
     timeout-minutes: 360
     env:
       SCCACHE_GHA_ENABLED: true
@@ -156,6 +156,12 @@ jobs:
       matrix:
         include:
           - target_triple: x86_64-windows-msvc
+            vcvars: vcvars64
+            image: windows-latest
+
+          - target_triple: aarch64-windows-msvc
+            vcvars: vcvarsarm64
+            image: windows-11-arm
 
     steps:
       - uses: actions/checkout@v4
@@ -180,7 +186,7 @@ jobs:
       - name: Setup MSVC environment
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat"
           set >> %GITHUB_ENV%
 
       - name: Build
