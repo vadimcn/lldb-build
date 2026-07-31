@@ -160,7 +160,7 @@ jobs:
             python_archive: https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
             vcvars: vcvars64
           - target_triple: aarch64-windows-msvc
-            image: windows-11-arm
+            image: windows-11-vs2026-arm
             python_archive: https://github.com/astral-sh/python-build-standalone/releases/download/20260728/cpython-3.12.13+20260728-aarch64-pc-windows-msvc-pgo-full.tar.zst
             vcvars: vcvarsarm64
 
@@ -187,7 +187,7 @@ jobs:
       - name: Setup MSVC environment
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat"
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat"
           set >> %GITHUB_ENV%
 
       - name: Build
