@@ -208,9 +208,10 @@ def package_lldb(llvm_src: Path, llvm_build: Path, python_dist: Path, cfg: dict[
             add_to_zip(rel_glob(llvm_build, lldb_files), zip)
 
             redist = Path(os.environ['VCToolsRedistDir'])
+            arch_dir = 'arm64' if cfg['CMAKE_SYSTEM_PROCESSOR'] == 'aarch64' else 'x64'
             vcrt_files = [
-                'x64/Microsoft.VC*.CRT/vcruntime140*.dll',
-                'x64/Microsoft.VC*.CRT/msvcp140.dll',
+                f'{arch_dir}/Microsoft.VC*.CRT/vcruntime140*.dll',
+                f'{arch_dir}/Microsoft.VC*.CRT/msvcp140.dll',
             ]
 
             def set_prefix(files: PathDuples):
