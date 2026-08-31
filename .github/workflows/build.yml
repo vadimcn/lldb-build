@@ -158,10 +158,12 @@ jobs:
           - target_triple: x86_64-windows-msvc
             image: windows-latest
             python_archive: https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
+            vctools: x86.x64
             vcvars: vcvars64
           - target_triple: aarch64-windows-msvc
             image: windows-11-vs2026-arm
             python_archive: https://github.com/astral-sh/python-build-standalone/releases/download/20260728/cpython-3.12.13+20260728-aarch64-pc-windows-msvc-pgo-full.tar.zst
+            vctools: arm64
             vcvars: vcvarsarm64
 
     steps:
@@ -187,7 +189,7 @@ jobs:
       - name: Setup MSVC environment
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\${{ matrix.vcvars }}.bat"
+          for /f "usebackq delims=" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.${{ matrix.vctools }} -find VC\Auxiliary\Build\${{ matrix.vcvars }}.bat`) do call "%%i"
           set >> %GITHUB_ENV%
 
       - name: Build
