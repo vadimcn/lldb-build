@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 360
     env:
       SCCACHE_GHA_ENABLED: true
-      
+
     strategy:
       fail-fast: false
       matrix:
@@ -114,7 +114,7 @@ jobs:
           wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-aarch64-apple-darwin-pgo-full.tar.zst
 
           echo "MACOSX_DEPLOYMENT_TARGET=${{ matrix.mac_deployment }}" >> $GITHUB_ENV
-      
+
       - name: Submodules
         run: git submodule update --init --depth 1
 
@@ -146,7 +146,7 @@ jobs:
 
   windows:
     name: Windows
-    runs-on: windows-latest
+    runs-on: ${{ matrix.image }}
     timeout-minutes: 360
     env:
       SCCACHE_GHA_ENABLED: true
@@ -156,6 +156,15 @@ jobs:
       matrix:
         include:
           - target_triple: x86_64-windows-msvc
+            image: windows-latest
+            python_archive: https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
+            vctools: x86.x64
+            vcvars: vcvars64
+          - target_triple: aarch64-windows-msvc
+            image: windows-11-vs2026-arm
+            python_archive: https://github.com/astral-sh/python-build-standalone/releases/download/20260728/cpython-3.12.13+20260728-aarch64-pc-windows-msvc-pgo-full.tar.zst
+            vctools: arm64
+            vcvars: vcvarsarm64
 
     steps:
       - uses: actions/checkout@v4
@@ -171,7 +180,7 @@ jobs:
           choco install wget -y
 
           mkdir -p $RUNNER_TEMP/ps
-          wget -q -P $RUNNER_TEMP/ps https://github.com/vadimcn/lldb-build/releases/download/blobs/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-shared-pgo-full.tar.zst
+          wget -q -P $RUNNER_TEMP/ps ${{ matrix.python_archive }}
 
       - name: Submodules
         shell: bash
@@ -180,7 +189,7 @@ jobs:
       - name: Setup MSVC environment
         shell: cmd
         run: |
-          for /f "usebackq delims=" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find VC\Auxiliary\Build\vcvars64.bat`) do call "%%i"
+          for /f "usebackq delims=" %%i in (`vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.${{ matrix.vctools }} -find VC\Auxiliary\Build\${{ matrix.vcvars }}.bat`) do call "%%i"
           set >> %GITHUB_ENV%
 
       - name: Build
@@ -192,7 +201,7 @@ jobs:
             --ccache=sccache \
             --target=${{ matrix.target_triple }} \
             --build-type=MinSizeRel \
-            --release-package 
+            --release-package
 
       - name: Artifacts
         uses: actions/upload-artifact@v4
@@ -215,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: 
+    needs:
       - linux
       - macos
       - windows
@@ -237,5 +246,3 @@ jobs:
           artifacts/**/*.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-

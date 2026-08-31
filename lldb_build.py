@@ -20,6 +20,8 @@ python_dir = args.build_dir / 'python'
 
 if platform.system() == 'Windows':
     arch = 'x86_64'
+    if platform.machine() == 'ARM64':
+        arch = 'aarch64'
     system = 'windows'
     python3 = python_dir / 'install' / 'python.exe'
 else:

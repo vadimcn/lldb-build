@@ -74,7 +74,17 @@ targets: Dict[str, Dict[str, str]] = {
         'LLVM_HOST_TRIPLE': 'arm64-apple-darwin',
         'LLVM_TARGET_ARCH': 'arm64',
     },
-    'x86_64-windows-msvc': windows,
+    'x86_64-windows-msvc': {
+        **windows,
+        'CMAKE_SYSTEM_PROCESSOR': 'x86_64',
+    },
+    'aarch64-windows-msvc': {
+        **windows,
+        'TARGET_PYTHON_ARCHIVE': 'cpython-*-aarch64-*-windows-msvc-*.tar.zst',
+        'CMAKE_SYSTEM_PROCESSOR': 'aarch64',
+        'LLVM_HOST_TRIPLE': 'aarch64-windows-msvc',
+        'LLVM_TARGET_ARCH': 'aarch64',
+    },
 }
 
 
