@@ -161,7 +161,7 @@ def package_lldb(llvm_src: Path, llvm_build: Path, python_dist: Path, cfg: dict[
             output = check_output(['otool', '-L', str(tempbin)], encoding='utf8')
             regex = re.compile(r'^\s*(.*(libpython3.*))\s\(', re.MULTILINE)
             match = regex.search(output)
-            assert match is not None
+            assert match is not None, f'Could not find {regex} in {output}'
             oldname = match.group(1)
             newname = '@rpath/' + match.group(2)
             check_call(['install_name_tool', '-change', oldname, newname, tempbin])
